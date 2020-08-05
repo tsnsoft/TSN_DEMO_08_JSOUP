@@ -2,6 +2,7 @@
 Технология JSOUP для работы с html
 
 _Пример работы с JSOUP (курсы валют):_
+
 ![Screenshot](screenshot.png)
 
 ![Screenshot](jsoup1.png)
