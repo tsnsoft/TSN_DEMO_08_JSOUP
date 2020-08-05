@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP.iml" filepath="$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP.iml" group="TSN_DEMO_08_JSOUP" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP_MICRO/TSN_DEMO_08_JSOUP_MICRO.iml" filepath="$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP_MICRO/TSN_DEMO_08_JSOUP_MICRO.iml" group="TSN_DEMO_08_JSOUP/TSN_DEMO_08_JSOUP_MICRO" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP_Rates/TSN_DEMO_08_JSOUP_Rates.iml" filepath="$PROJECT_DIR$/.idea/modules/TSN_DEMO_08_JSOUP_Rates/TSN_DEMO_08_JSOUP_Rates.iml" group="TSN_DEMO_08_JSOUP/TSN_DEMO_08_JSOUP_Rates" />
+    </modules>
+  </component>
+</project>
