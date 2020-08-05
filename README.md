@@ -8,3 +8,5 @@ _Пример работы с JSOUP (курсы валют):_
 ![Screenshot](jsoup1.png)
 
 ![Screenshot](jsoup2.png)
+
+![Screenshot](jsoup3.jpg)

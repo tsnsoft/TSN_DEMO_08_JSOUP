@@ -48,7 +48,8 @@ public class MainActivity extends AppCompatActivity {
             Element table = tables.get(0); // Берем 1 таблицу для физических лиц
             // Цикл по строкам таблицы
             int i = 0;
-            for (Element row : table.select("tr")) { // Пропускаем 1 строку с заголовком (eq - конкретная , lt - ниже, gt - выше)
+            for (Element row : table.select("tr")) { // Пропускаем 1 строку с заголовком
+                // (eq - конкретная , lt - ниже, gt - выше)
                 // Цикл по столбцам таблицы
                 for (Element col : row.select("td")) { //
                     data.append(String.format("%12s ", col.text())); // Считываем данные с ячейки таблицы
