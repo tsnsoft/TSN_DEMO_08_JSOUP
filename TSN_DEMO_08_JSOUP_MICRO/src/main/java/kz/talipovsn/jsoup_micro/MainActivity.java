@@ -45,22 +45,19 @@ public class MainActivity extends AppCompatActivity {
             data.append("\n");
             Elements e = doc.select("div.exchange"); // Ищем в документе "<div class="exchange"> с данными о валютах
             Elements tables = e.select("table"); // Ищем таблицы с котировками
-            Element table = tables.get(0); // Берем 1 таблицу для физических лиц
-            // Цикл по строкам таблицы
+            Element table = tables.get(0); // Берем 1 таблицу
             int i = 0;
-            for (Element row : table.select("tr")) { // Пропускаем 1 строку с заголовком
-                // (eq - конкретная , lt - ниже, gt - выше)
+            // Цикл по строкам таблицы
+            for (Element row : table.select("tr")) { // все строки)
+//          for (Element row : table.select("tr:lt(3)")) { // чтение 3 строк (eq - конкретная строка ,
+//          lt - ниже, gt - выше)
                 // Цикл по столбцам таблицы
                 for (Element col : row.select("td")) { //
                     data.append(String.format("%12s ", col.text())); // Считываем данные с ячейки таблицы
                 }
-                if (i++ > 2) {
-                    break;
-                } else {
-                    data.append("\n"); // Добавляем переход на следующую строку;
-                }
+                data.append("\n"); // Добавляем переход на следующую строку;
             }
-            textView.setText(data);
+            textView.setText(data.toString().trim());
         } catch (Exception e) {
             textView.setText(R.string.error);
         }

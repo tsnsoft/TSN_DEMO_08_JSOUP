@@ -20,25 +20,20 @@ public class RatesReader {
             data.append("\n");
             Elements e = doc.select("div.exchange"); // Ищем в документе "<div class="exchange"> с данными о валютах
             Elements tables = e.select("table"); // Ищем таблицы с котировками
-            Element table = tables.get(0); // Берем 1 таблицу для физических лиц
-            // Цикл по строкам таблицы
+            Element table = tables.get(0); // Берем 1 таблицу
             int i = 0;
-            for (Element row : table.select("tr")) { // Пропускаем 1 строку с заголовком (eq - конкретная , lt - ниже, gt - выше)
+            // Цикл по строкам таблицы
+            for (Element row : table.select("tr")) {
                 // Цикл по столбцам таблицы
                 for (Element col : row.select("td")) { //
                     data.append(String.format("%12s ", col.text())); // Считываем данные с ячейки таблицы
                 }
-                if (i++ > 2) {
-                    break;
-                } else {
-                    data.append("\n"); // Добавляем переход на следующую строку;
-                }
+                data.append("\n"); // Добавляем переход на следующую строку;
             }
-
         } catch (Exception ignored) {
             return null; // При ошибке доступа возвращаем null
         }
-        return data.toString(); // Возвращаем результат
+        return data.toString().trim(); // Возвращаем результат
     }
 
 }
