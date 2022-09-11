@@ -8,7 +8,7 @@ import org.jsoup.select.Elements;
 // СОЗДАТЕЛЬ КОТИРОВОК ВАЛЮТ
 public class RatesReader {
 
-    private static final String BASE_URL = "http://kazfin.info/kazakhstan"; // Адрес с котировками
+    private static final String BASE_URL = "https://kazfin.info/kazakhstan"; // Адрес с котировками
 
     // Парсинг котировок из формата html web-страницы банка, при ошибке доступа возвращаем null
     public static String getRatesData() {

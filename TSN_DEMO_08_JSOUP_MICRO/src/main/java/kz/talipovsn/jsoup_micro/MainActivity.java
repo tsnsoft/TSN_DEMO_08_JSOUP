@@ -2,7 +2,7 @@ package kz.talipovsn.jsoup_micro;
 
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imageView; // Иконка погоды
     private TextView textView; // Компонент для данных погоды
 
-    private static final String BASE_URL = "http://kazfin.info/kazakhstan"; // Адрес с котировками
+    private static final String BASE_URL = "https://kazfin.info/kazakhstan"; // Адрес с котировками
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
