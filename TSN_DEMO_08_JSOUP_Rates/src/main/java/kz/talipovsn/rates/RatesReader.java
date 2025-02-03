@@ -5,6 +5,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 // СОЗДАТЕЛЬ КОТИРОВОК ВАЛЮТ
 public class RatesReader {
 
@@ -14,6 +21,7 @@ public class RatesReader {
     public static String getRatesData() {
         StringBuilder data = new StringBuilder();
         try {
+            setTrustAllCertificates(); // Установка доверенных сертификатов
             Document doc = Jsoup.connect(BASE_URL).timeout(5000).get(); // Создание документа JSOUP из html
             data.append("Курсы валюты:\n"); // Считываем заголовок страницы
             data.append(String.format("%12s %12s %12s %12s\n", "валюта", "наименование", "курс", "изменение").trim());
@@ -34,6 +42,29 @@ public class RatesReader {
             return null; // При ошибке доступа возвращаем null
         }
         return data.toString().trim(); // Возвращаем результат
+    }
+
+    // Установка доверенных сертификатов для всех сайтов
+    private static void setTrustAllCertificates() {
+        try {
+            // Создаем доверенный сертификатный менеджер, который не проверяет сертификаты
+            TrustManager[] trustAllCertificates = new TrustManager[]{
+                    new X509TrustManager() {
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+                    }
+            };
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCertificates, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

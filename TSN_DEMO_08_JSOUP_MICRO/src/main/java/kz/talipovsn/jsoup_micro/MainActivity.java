@@ -2,7 +2,9 @@ package kz.talipovsn.jsoup_micro;
 
 import android.os.Bundle;
 import android.os.StrictMode;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -11,6 +13,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,8 +46,9 @@ public class MainActivity extends AppCompatActivity {
     // Кнопка "Обновить"
     public void onClick(View view) {
         textView.setText(R.string.not_data);
-        try {
-            StringBuilder data = new StringBuilder();
+        StringBuilder data = new StringBuilder();
+        try { // Попытка выполнить чтение данных
+            setTrustAllCertificates(); // Установка доверенных сертификатов
             Document doc = Jsoup.connect(BASE_URL).timeout(5000).get(); // Создание документа JSOUP из html
             data.append("Курсы валюты:\n"); // Считываем заголовок страницы
             data.append(String.format("%12s %12s %12s %12s\n", "валюта", "наименование", "курс", "изменение").trim());
@@ -63,4 +73,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Установка доверенных сертификатов для всех сайтов
+    private void setTrustAllCertificates() {
+        try {
+            // Создаем доверенный сертификатный менеджер, который не проверяет сертификаты
+            TrustManager[] trustAllCertificates = new TrustManager[]{
+                    new X509TrustManager() {
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+                    }
+            };
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCertificates, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
+
+
+
+
+
+

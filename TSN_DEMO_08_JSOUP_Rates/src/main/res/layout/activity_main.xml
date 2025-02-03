@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#203b5b"
+    android:fitsSystemWindows="true"
     tools:context="kz.talipovsn.rates.MainActivity">
 
     <ScrollView

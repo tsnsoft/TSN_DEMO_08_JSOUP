@@ -8,6 +8,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="#203b5b"
+    android:fitsSystemWindows="true"
     tools:context="MainActivity">
 
     <TextView
