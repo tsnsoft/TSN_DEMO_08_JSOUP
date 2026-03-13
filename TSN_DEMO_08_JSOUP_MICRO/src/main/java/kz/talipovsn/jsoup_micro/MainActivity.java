@@ -73,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
                 Document doc = Jsoup.connect(urls[0]).timeout(5000).get();
                 StringBuilder data = new StringBuilder();
 
+                // На сайте https://tou.edu.kz/ru/  поиск "Call Center +7 705 118 60 21"
+                // В браузере F12 и на нужном элементе: Copy -> Copy Selector
+
                 String selector = "#content > div:nth-child(18) > div > div > div > div:nth-child(1) > div:nth-child(2)";
                 // String selector = "#content .phone__text";
                 //String selector = "#content div div.phone__text";
