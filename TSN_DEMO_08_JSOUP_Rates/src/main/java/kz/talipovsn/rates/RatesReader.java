@@ -3,70 +3,59 @@ package kz.talipovsn.rates;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-
 /**
- * Утилитный класс для получения котировок валют с сайта kazfin.info.
+ * Утилитный класс для получения котировок валют с официального фида НБ РК.
  */
 public class RatesReader {
 
-    private static final String BASE_URL = "https://kazfin.info/"; // Адрес с котировками
+    // Стабильный официальный адрес с котировками Национального Банка РК
+    private static final String BASE_URL = "https://nationalbank.kz/rss/rates_all.xml";
 
     /**
-     * Парсинг котировок из HTML-страницы сайта. Возвращает отформатированную строку с данными
+     * Парсинг котировок с сервера НБ РК. Возвращает отформатированную строку с данными
      * или null при ошибке.
+     *
      * @return Строка с данными о курсах валют или null при ошибке.
      */
     public static String getRatesData() {
-        // Настройка HTTPS для поддержки TLS 1.2
-        try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, null, null);
-            SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-            System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
-
         StringBuilder data = new StringBuilder();
         try {
-            // Загружаем HTML-документ с сайта
-            Document doc = Jsoup.connect(BASE_URL).timeout(5000).get();
-            data.append("Курсы валюты:\n");
-            data.append(String.format("%-12s %-20s %-12s %-12s\n", "Валюта", "Наименование", "Курс", "Изменение"));
-            data.append("\n");
+            // Загружаем документ с использованием XML-парсера Jsoup
+            Document doc = Jsoup.connect(BASE_URL)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                    .timeout(5000)
+                    .parser(Parser.xmlParser())
+                    .get();
 
-            // Ищем все таблицы на странице
-            Elements tables = doc.select("table");
+            data.append("Курсы валют НБ РК:\n\n");
+            data.append(String.format("%-8s %-18s %-12s %-10s\n", "Валюта", "Наименование", "Курс", "Изменение"));
+            data.append("----------------------------------------------------\n");
+
+            // Выбираем все элементы <item> с данными о валютах
+            Elements items = doc.select("item");
             boolean found = false;
-            for (Element table : tables) {
-                // Проверяем строки таблицы
-                for (Element row : table.select("tr")) {
-                    Elements cols = row.select("td");
-                    if (cols.size() >= 4 && isCurrencyRow(cols)) { // Проверяем, что строка содержит валютные данные
-                        String currency = cols.get(0).text(); // Валюта (например, USD)
-                        String name = cols.get(1).text();     // Наименование (например, Доллар США)
-                        String rate = cols.get(2).text();     // Курс (например, 472.14 тг.)
-                        String change = cols.get(3).text();   // Изменение (например, ↓ −0,03)
-                        // Форматируем строку таблицы
-                        data.append(String.format("%-12s %-20s %-12s %-12s\n",
-                                currency, name, rate, change));
-                        found = true;
-                    }
+
+            for (Element item : items) {
+                String code = getTagText(item, "title");       // Код валюты (например, USD)
+                String rate = getTagText(item, "description"); // Курс (например, 495.20)
+                String change = getTagText(item, "change");    // Изменение (например, +1.15)
+                String index = getTagText(item, "index");      // Тренд (UP / DOWN)
+
+                if (isTargetCurrency(code)) {
+                    String name = getCurrencyName(code);
+                    String arrow = "UP".equalsIgnoreCase(index) ? "↑ " : ("DOWN".equalsIgnoreCase(index) ? "↓ " : "");
+
+                    data.append(String.format("%-8s %-18s %-12s %-10s\n",
+                            code, name, rate + " тг.", arrow + change));
+                    found = true;
                 }
-                if (found) break; // Прерываем, если нашли подходящую таблицу
             }
 
             if (!found) {
-                return null; // Таблица с курсами валют не найдена
+                return null; // Данные о нужных валютах не найдены
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,14 +65,39 @@ public class RatesReader {
     }
 
     /**
-     * Проверяет, является ли строка таблицы строкой с данными о валюте.
-     * @param cols Столбцы строки.
-     * @return true, если строка содержит валюту (например, USD, EUR).
+     * Безопасное получение текста из тега внутри элемента.
      */
-    private static boolean isCurrencyRow(Elements cols) {
-        if (cols.isEmpty()) return false;
-        String firstCol = cols.get(0).text().toUpperCase();
-        // Проверяем, содержит ли первый столбец код валюты (USD, EUR, RUR и т.д.)
-        return firstCol.matches("USD|EUR|RUR|GBP|CNY|JPY|KZT|.*");
+    private static String getTagText(Element parent, String tagName) {
+        Element el = parent.selectFirst(tagName);
+        return (el != null) ? el.text().trim() : "";
+    }
+
+    /**
+     * Проверяет, входит ли валюта в список отображаемых (чтобы не выводить все 39 валют подряд).
+     *
+     * @param code Трехбуквенный код валюты.
+     * @return true, если валюту нужно отобразить.
+     */
+    private static boolean isTargetCurrency(String code) {
+        // Здесь оставляем строго основные мировые и региональные валюты:
+        return code.matches("USD|EUR|RUB|CNY|GBP|JPY|KGS|UZS|TRY");
+    }
+
+    /**
+     * Возвращает русское наименование валюты по её коду.
+     */
+    private static String getCurrencyName(String code) {
+        switch (code) {
+            case "USD": return "Доллар США";
+            case "EUR": return "Евро";
+            case "RUB": return "Российский рубль";
+            case "CNY": return "Китайский юань";
+            case "GBP": return "Фунт стерлингов";
+            case "JPY": return "Японская иена";
+            case "KGS": return "Кыргызский сом";
+            case "UZS": return "Узбекский сум";
+            case "TRY": return "Турецкая лира";
+            default:    return code;
+        }
     }
 }

@@ -9,38 +9,22 @@ import android.widget.TextView;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-
 /**
- * Главная активность приложения для отображения курсов валют с сайта kazfin.info.
+ * Главная активность приложения для отображения курсов валют НБ РК через Jsoup.
  */
 public class MainActivity extends AppCompatActivity {
 
     private TextView textView; // Компонент для отображения данных
-    private static final String BASE_URL = "https://tou.edu.kz/ru/"; // Адрес с котировками
+    // Официальный стабильный фид курсов валют Национального Банка РК
+    private static final String BASE_URL = "https://nationalbank.kz/rss/rates_all.xml";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Настройка HTTPS для поддержки TLS 1.2 на старых устройствах
-        try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, null, null);
-            SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-            System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
 
         textView = findViewById(R.id.textView);
         fetchCurrencyData(); // Загружаем данные при запуске приложения
@@ -62,29 +46,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * AsyncTask для выполнения парсинга сайта в фоновом потоке.
+     * AsyncTask для выполнения парсинга в фоновом потоке.
      */
     private class FetchCurrencyTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
             try {
-                // Загружаем HTML-документ с сайта
-                Document doc = Jsoup.connect(urls[0]).timeout(5000).get();
-                StringBuilder data = new StringBuilder();
+                // Загружаем документ, явно указывая XML-парсер и User-Agent
+                Document doc = Jsoup.connect(urls[0])
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                        .timeout(5000)
+                        .parser(Parser.xmlParser())
+                        .get();
 
-                // На сайте https://tou.edu.kz/ru/  поиск "Call Center +7 705 118 60 21"
-                // В браузере F12 и на нужном элементе: Copy -> Copy Selector
+                StringBuilder data = new StringBuilder("Курсы валют НБ РК:\n\n");
 
-                String selector = "#content > div:nth-child(18) > div > div > div > div:nth-child(1) > div:nth-child(2)";
-                // String selector = "#content .phone__text";
-                //String selector = "#content div div.phone__text";
+                // Выбираем все элементы <item> с валютами
+                Elements items = doc.select("item");
 
-                Element element = doc.selectFirst(selector);
-                //Element element = doc.select(selector).first();
+                // Проходим по каждому элементу <item> и извлекаем название валюты и курс
+                for (Element item : items) {
+                    Element titleElement = item.selectFirst("title");
+                    Element descElement = item.selectFirst("description");
 
-                data.append("Call Center:\n");
-                data.append(element.text());
+                    if (titleElement != null && descElement != null) {
+                        String title = titleElement.text(); // Код валюты (USD, EUR, RUB и т.д.)
+                        String rate = descElement.text();   // Курс в тенге
+
+                        // Фильтруем основные валюты для наглядного вывода
+                        if (title.equals("USD") || title.equals("EUR") || title.equals("RUB") || title.equals("CNY")) {
+                            data.append("1 ").append(title).append(" = ").append(rate).append(" KZT\n");
+                        }
+                    }
+                }
+
                 return data.toString().trim();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -95,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
-                textView.setText(result); // Отображаем данные или сообщение об ошибке
+                textView.setText(result); // Отображаем полученные курсы или текст ошибки
             } else {
                 textView.setText(R.string.error); // Ошибка
             }
